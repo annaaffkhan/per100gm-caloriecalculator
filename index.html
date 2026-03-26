@@ -1,0 +1,477 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Per 100gm Calorie Calculator</title>
+
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Helvetica Neue', sans-serif;
+  background: #080c14;
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  overflow: hidden;
+}
+
+/* ── BACKGROUND ── */
+.bg {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  background: radial-gradient(ellipse at 20% 20%, #0d1a2e 0%, #080c14 60%, #0a0d1a 100%);
+  overflow: hidden;
+}
+
+/* subtle vignette */
+.bg::before {
+  content: '';
+  position: absolute; inset: 0;
+  background: radial-gradient(ellipse at center, transparent 40%, rgba(0,0,0,0.55) 100%);
+  pointer-events: none;
+  z-index: 2;
+}
+
+/* ── FOOD EMOJI PARTICLES ── */
+.food-layer {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+}
+
+.food {
+  position: absolute;
+  font-size: 28px;
+  opacity: 0;
+  user-select: none;
+  will-change: transform, opacity;
+  filter: blur(0.3px);
+  animation: floatFood linear infinite;
+}
+
+/* Each food item gets unique position, size, duration, delay via inline style */
+
+@keyframes floatFood {
+  0% {
+    opacity: 0;
+    transform: translateY(0px) rotate(0deg) scale(0.85);
+  }
+  8% {
+    opacity: var(--op);
+  }
+  92% {
+    opacity: var(--op);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(var(--drift-y)) rotate(var(--rot)) scale(1.05);
+  }
+}
+
+/* gentle sway on top of the vertical float */
+.food:nth-child(odd) {
+  animation-name: floatFoodA;
+}
+.food:nth-child(even) {
+  animation-name: floatFoodB;
+}
+
+@keyframes floatFoodA {
+  0%   { opacity: 0;         transform: translateY(0px)   translateX(0px)   rotate(0deg)   scale(0.85); }
+  8%   { opacity: var(--op); }
+  30%  {                     transform: translateY(calc(var(--drift-y) * 0.3)) translateX(12px)  rotate(calc(var(--rot) * 0.3)) scale(0.92); }
+  60%  {                     transform: translateY(calc(var(--drift-y) * 0.6)) translateX(-8px)  rotate(calc(var(--rot) * 0.6)) scale(0.98); }
+  92%  { opacity: var(--op); }
+  100% { opacity: 0;         transform: translateY(var(--drift-y))            translateX(4px)  rotate(var(--rot))              scale(1.05); }
+}
+@keyframes floatFoodB {
+  0%   { opacity: 0;         transform: translateY(0px)   translateX(0px)   rotate(0deg)   scale(0.9); }
+  8%   { opacity: var(--op); }
+  30%  {                     transform: translateY(calc(var(--drift-y) * 0.3)) translateX(-10px) rotate(calc(var(--rot) * 0.3)) scale(0.95); }
+  60%  {                     transform: translateY(calc(var(--drift-y) * 0.6)) translateX(6px)   rotate(calc(var(--rot) * 0.6)) scale(1.0); }
+  92%  { opacity: var(--op); }
+  100% { opacity: 0;         transform: translateY(var(--drift-y))            translateX(-3px) rotate(var(--rot))              scale(1.06); }
+}
+
+/* ── APP ── */
+.app {
+  position: relative; z-index: 10;
+  width: 100%;
+  max-width: 360px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* ── GLASS CONTAINER ── */
+.container {
+  width: 100%;
+  background: rgba(255,255,255,0.06);
+  backdrop-filter: blur(28px) saturate(160%) brightness(1.1);
+  -webkit-backdrop-filter: blur(28px) saturate(160%) brightness(1.1);
+  border-radius: 32px;
+  border: 1px solid rgba(255,255,255,0.14);
+  border-top-color: rgba(255,255,255,0.26);
+  padding: 24px 18px;
+  text-align: center;
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.18),
+    inset 0 -1px 0 rgba(0,0,0,0.12),
+    0 24px 64px rgba(0,0,0,0.55);
+  animation: fadeUp 0.6s cubic-bezier(0.22,1,0.36,1) both;
+}
+
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(22px) scale(0.97); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+h2 {
+  font-size: 19px; font-weight: 600; letter-spacing: -0.3px;
+  color: rgba(255,255,255,0.9); margin-bottom: 18px;
+}
+
+/* ── CARD — base ── */
+.card {
+  width: 100%;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-radius: 18px;
+  border: 1px solid rgba(255,255,255,0.09);
+  padding: 14px 12px;
+  margin-bottom: 10px;
+}
+
+/* Card 1 — blue/indigo tint (input card) */
+.card:nth-child(1) {
+  background: rgba(99,102,241,0.09);
+  border-top-color: rgba(139,92,246,0.25);
+  box-shadow: inset 0 1px 0 rgba(139,92,246,0.15);
+}
+
+/* Card 2 — teal/cyan tint (I will eat) */
+.card:nth-child(2) {
+  background: rgba(20,184,166,0.08);
+  border-top-color: rgba(45,212,191,0.22);
+  box-shadow: inset 0 1px 0 rgba(45,212,191,0.13);
+}
+
+/* Card 3 — amber/warm tint (result display) */
+.card:nth-child(3) {
+  background: rgba(245,158,11,0.07);
+  border-top-color: rgba(251,191,36,0.2);
+  box-shadow: inset 0 1px 0 rgba(251,191,36,0.12);
+}
+
+/* ── ROW ── */
+.row {
+  display: grid;
+  grid-template-columns: 58px 1fr 36px;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+}
+.row + .row { margin-top: 10px; }
+
+.lbl {
+  font-size: 13px; font-weight: 500;
+  color: rgba(255,255,255,0.45);
+  text-align: right;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.unit {
+  font-size: 13px; font-weight: 500;
+  color: rgba(255,255,255,0.45);
+  text-align: left;
+  white-space: nowrap;
+}
+
+/* ── INPUT ── */
+input {
+  width: 100%;
+  padding: 12px 8px;
+  border-radius: 11px;
+  background: rgba(255,255,255,0.07);
+  border: 1px solid rgba(255,255,255,0.09);
+  color: #fff;
+  text-align: center;
+  font-size: 16px; font-family: inherit; font-weight: 500;
+  outline: none;
+  transition: transform 0.16s ease, background 0.16s ease, border-color 0.16s ease, box-shadow 0.16s ease;
+}
+input::placeholder { color: rgba(255,255,255,0.18); }
+input:focus {
+  transform: scale(1.04);
+  background: rgba(255,255,255,0.12);
+  border-color: rgba(139,92,246,0.5);
+  box-shadow: 0 0 0 3px rgba(139,92,246,0.12);
+}
+
+/* ── SELECT ── */
+select {
+  width: 100%; margin-top: 10px; padding: 11px 14px;
+  border-radius: 11px;
+  background: rgba(255,255,255,0.07);
+  color: rgba(255,255,255,0.7);
+  border: 1px solid rgba(255,255,255,0.09);
+  font-family: inherit; font-size: 13px; font-weight: 500;
+  cursor: pointer; outline: none;
+  -webkit-appearance: none; appearance: none;
+  transition: background 0.16s;
+}
+select:focus { background: rgba(255,255,255,0.12); border-color: rgba(139,92,246,0.5); }
+select option { background: #0f172a; color: #fff; }
+
+/* ── RESULT ── */
+.result {
+  font-size: 38px; font-weight: 700; letter-spacing: -1.5px;
+  min-height: 52px;
+  display: flex; align-items: center; justify-content: center;
+  background: linear-gradient(135deg, #fbbf24 0%, #f97316 50%, #ef4444 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  filter: drop-shadow(0 0 14px rgba(251,191,36,0.45)) drop-shadow(0 0 30px rgba(249,115,22,0.3));
+}
+
+/* ── BUTTON ── */
+button {
+  width: 100%; padding: 14px;
+  border-radius: 14px;
+  border: 1px solid rgba(239,68,68,0.25);
+  background: rgba(239,68,68,0.1);
+  backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+  color: rgba(255,200,200,0.88);
+  font-size: 15px; font-family: inherit; font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s, transform 0.14s, box-shadow 0.2s;
+  box-shadow: inset 0 1px 0 rgba(255,120,120,0.15);
+  letter-spacing: -0.1px;
+}
+button:hover {
+  background: rgba(239,68,68,0.2);
+  transform: translateY(-1px);
+  box-shadow: inset 0 1px 0 rgba(255,120,120,0.2), 0 6px 20px rgba(239,68,68,0.2);
+}
+button:active { transform: scale(0.97); }
+
+/* ── CARD LABEL ── */
+.card-label {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 1.4px;
+  color: rgba(255,255,255,0.28);
+  text-align: left;
+  margin-bottom: 10px;
+  text-transform: uppercase;
+}
+
+/* ── FOOTER ── */
+.footer {
+  margin-top: 18px;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+.footer-links {
+  display: flex;
+  gap: 14px;
+  align-items: center;
+}
+
+.footer-link {
+  color: rgba(255,255,255,0.3);
+  transition: color 0.2s, transform 0.2s;
+  display: flex;
+  align-items: center;
+  text-decoration: none;
+}
+.footer-link:hover {
+  color: rgba(255,255,255,0.75);
+  transform: translateY(-2px);
+}
+
+.footer-credit {
+  font-size: 11px;
+  color: rgba(255,255,255,0.2);
+  letter-spacing: 0.3px;
+}
+.footer-name {
+  color: rgba(255,255,255,0.38);
+  font-weight: 600;
+}
+</style>
+</head>
+<body>
+
+<div class="bg">
+  <div class="food-layer" id="foodLayer"></div>
+</div>
+
+<div class="app">
+<div class="container">
+
+  <h2>Per 100gm Calorie Calculator</h2>
+
+  <div class="card">
+    <div class="card-label">NUTRITION LABEL</div>
+    <div class="row">
+      <span class="lbl">Calories</span>
+      <input id="cal" placeholder="0" />
+      <span class="unit">kcal</span>
+    </div>
+    <div class="row">
+      <span class="lbl">per</span>
+      <input id="serv" value="100" />
+      <span class="unit">g</span>
+    </div>
+    <select id="preset">
+      <option value="100">100 g (mostly used)</option>
+      <option value="15">15 g (mostly used)</option>
+      <option value="25">25 g</option>
+      <option value="50">50 g</option>
+      <option value="custom">Custom</option>
+    </select>
+  </div>
+
+  <div class="card">
+    <div class="card-label">YOUR PORTION</div>
+    <div class="row">
+      <span class="lbl">I will eat</span>
+      <input id="your" placeholder="0" />
+      <span class="unit">g</span>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="result" id="total"></div>
+  </div>
+
+  <button id="clearBtn">Clear all</button>
+
+  <!-- ── FOOTER ── -->
+  <div class="footer">
+    <div class="footer-links">
+      <a href="https://www.youtube.com/@annaaffkhan" target="_blank" class="footer-link" title="YouTube">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M23.498 6.186a3.016 3.016 0 00-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 00.502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 002.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 002.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>
+      </a>
+      <a href="https://www.instagram.com/annaaffkhan/" target="_blank" class="footer-link" title="Instagram">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z"/></svg>
+      </a>
+      <a href="https://paypal.me/annaaffkhan" target="_blank" class="footer-link" title="Support on PayPal">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M7.076 21.337H2.47a.641.641 0 01-.633-.74L4.944.901C5.026.382 5.474 0 5.998 0h7.46c2.57 0 4.578.543 5.69 1.81 1.01 1.15 1.304 2.42 1.012 4.287-.023.143-.047.288-.077.437-.983 5.05-4.349 6.797-8.647 6.797h-2.19c-.524 0-.968.382-1.05.9l-1.12 7.106zm14.146-14.42a3.35 3.35 0 00-.607-.541c-.013.076-.026.175-.041.254-.93 4.778-4.005 7.201-9.138 7.201h-2.19a.563.563 0 00-.556.479l-1.187 7.527h-.506l-.24 1.516a.56.56 0 00.554.647h3.882c.46 0 .85-.334.922-.788.06-.26.76-4.852.816-5.09a.932.932 0 01.923-.788h.58c3.76 0 6.705-1.528 7.565-5.946.36-1.847.174-3.388-.777-4.471z"/></svg>
+      </a>
+    </div>
+    <p class="footer-credit">made by <span class="footer-name">Annaaff Khan</span></p>
+  </div>
+
+<script>
+(function(){
+  "use strict";
+
+  /* ── FOOD PARTICLE SYSTEM ── */
+  const emojis = [
+    '🍎','🍊','🍋','🍇','🍓','🫐','🍑','🥑','🥦','🥕',
+    '🌽','🥚','🧀','🍗','🥩','🍖','🥗','🍜','🍣','🍱',
+    '🧁','🍰','🍩','🍪','🥐','🥞','🧆','🥙','🌮','🍔',
+    '🥝','🍍','🥭','🫒','🧄','🧅','🫑','🥬','🍠','🌰'
+  ];
+
+  const layer = document.getElementById('foodLayer');
+  const COUNT = 28; // number of floating items
+
+  function rand(min, max){ return Math.random() * (max - min) + min; }
+  function pick(arr){ return arr[Math.floor(Math.random() * arr.length)]; }
+
+  for(let i = 0; i < COUNT; i++){
+    const el = document.createElement('div');
+    el.className = 'food';
+    el.textContent = pick(emojis);
+
+    // random position spread across full viewport
+    const x = rand(2, 96);   // % from left
+    const y = rand(2, 96);   // % from top
+    el.style.left = x + '%';
+    el.style.top  = y + '%';
+
+    // random size
+    const size = rand(18, 38);
+    el.style.fontSize = size + 'px';
+
+    // very soft opacity — dark theme, don't overpower
+    const op = rand(0.06, 0.18);
+    el.style.setProperty('--op', op);
+
+    // slow drift upward (negative = up), slight variation
+    const driftY = rand(-60, -25) + 'px';
+    el.style.setProperty('--drift-y', driftY);
+
+    // gentle random rotation
+    const rot = rand(-18, 18) + 'deg';
+    el.style.setProperty('--rot', rot);
+
+    // slightly faster — 10s to 22s
+    const dur = rand(10, 22);
+    el.style.animationDuration = dur + 's';
+
+    // stagger so they don't all appear at once
+    const delay = rand(0, -20); // negative delay = start mid-animation
+    el.style.animationDelay = delay + 's';
+
+    layer.appendChild(el);
+  }
+
+  /* ── CALCULATOR LOGIC (untouched) ── */
+  const $ = id => document.getElementById(id);
+  const cal=$('cal'), serv=$('serv'), your=$('your');
+  const total=$('total'), preset=$('preset'), clearBtn=$('clearBtn');
+
+  function safeNum(v){ const n=parseFloat(v); return isNaN(n)?0:n; }
+
+  function animateNumber(value){
+    const duration=250, startTime=performance.now();
+    function step(t){
+      const progress=Math.min((t-startTime)/duration,1);
+      total.textContent=Math.floor(progress*value)+' kcal';
+      if(progress<1) requestAnimationFrame(step);
+      else total.textContent=value+' kcal';
+    }
+    requestAnimationFrame(step);
+  }
+
+  function calc(){
+    const c=safeNum(cal.value), s=safeNum(serv.value), y=safeNum(your.value);
+    if(!c||!s||!y){ total.textContent=''; return; }
+    animateNumber(Math.round((c/s)*y));
+  }
+
+  function syncPreset(){
+    const val=serv.value;
+    preset.value=[...preset.options].find(o=>o.value===val)?val:'custom';
+  }
+
+  function triggerTyping(el){
+    el.style.transform='scale(1.1)';
+    setTimeout(()=>el.style.transform='scale(1)',120);
+  }
+
+  cal.addEventListener('input',  ()=>{ triggerTyping(cal);  calc(); });
+  your.addEventListener('input', ()=>{ triggerTyping(your); calc(); });
+  serv.addEventListener('input', ()=>{ syncPreset(); calc(); });
+  preset.addEventListener('change',()=>{ if(preset.value!=='custom'){ serv.value=preset.value; calc(); } });
+  clearBtn.addEventListener('click',()=>{ cal.value=''; your.value=''; total.textContent=''; });
+})();
+</script>
+</body>
+</html>
