@@ -23,12 +23,6 @@ Instantly convert calories based on portion size and quickly log your intake int
 
 ---
 
-## 📥 Download App (APK)
-
-https://drive.google.com/file/d/18Ly3MKg-FwShuxDnhfKfSo7iYib6dw9Y/view?usp=drive_link)
-
----
-
 ## 🛠️ Built With
 
 * HTML
